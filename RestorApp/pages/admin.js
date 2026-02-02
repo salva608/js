@@ -114,34 +114,59 @@ export function admin() {
     `;
 }
 
+/**
+ * Función principal que inicializa el dashboard administrativo
+ * - Carga todas las órdenes y usuarios desde la API
+ * - Actualiza las estadísticas en tiempo real
+ * - Renderiza la tabla de órdenes
+ * - Configura los event listeners para filtrar
+ */
 export async function adminLogic() {
-    // Cargar datos
-    allOrders = await fetchOrders();
-    users = await fetchUsers();
+    // Cargar datos de la API
+    allOrders = await fetchOrders();  // Obtiene todas las órdenes
+    users = await fetchUsers();       // Obtiene lista de usuarios
     
-    // Renderizar
-    updateStats();
-    renderOrdersTable(allOrders);
+    // Renderizar datos en el DOM
+    updateStats();                    // Actualiza tarjetas de estadísticas
+    renderOrdersTable(allOrders);     // Dibuja tabla inicial con todas las órdenes
     
-    // Event listeners
-    setupFilters();
+    // Configurar interactividad
+    setupFilters();                   // Activa el selector de filtro por estado
 }
 
-// ===== ESTADÍSTICAS =====
+/**
+ * Calcula y actualiza las estadísticas principales del dashboard
+ * - Total de órdenes (cantidad)
+ * - Órdenes pendientes (cantidad de estado 'pending')
+ * - Ingresos totales (suma de todos los totales de órdenes)
+ */
 function updateStats() {
+    // Contar total de órdenes en el sistema
     const totalOrders = allOrders.length;
+    
+    // Filtrar solo órdenes con estado 'pending' y contar
     const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
+    
+    // Sumar todos los totales de las órdenes usando reduce
     const totalRevenue = allOrders.reduce((sum, o) => sum + o.total, 0);
     
+    // Inyectar valores en los elementos del DOM
     document.getElementById('totalOrders').textContent = totalOrders;
     document.getElementById('pendingOrders').textContent = pendingOrders;
     document.getElementById('totalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
 }
 
-// ===== RENDERIZAR TABLA =====
+/**
+ * Renderiza la tabla de órdenes en el DOM
+ * - Ordena por fecha más reciente primero (descendente)
+ * - Busca el nombre del usuario para cada orden
+ * - Formatea fechas de manera legible
+ * - Añade event listeners a cada fila para permitir selección
+ */
 function renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTableBody');
     
+    // Validación: Si no hay órdenes, mostrar mensaje
     if (orders.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -151,11 +176,17 @@ function renderOrdersTable(orders) {
         return;
     }
     
+    // Transformar array de órdenes a HTML de tabla
     tbody.innerHTML = orders
+        // Ordenar órdenes por fecha creación (más recientes primero)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        // Mapear cada orden a una fila de tabla
         .map(order => {
+            // Buscar usuario que hizo la orden
             const user = users.find(u => u.id === order.userId);
             const userName = user ? user.name : 'Unknown User';
+            
+            // Formatear fecha a formato legible (ej: "Jan 15, 2:30 PM")
             const date = new Date(order.createdAt);
             const formattedDate = date.toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -164,6 +195,7 @@ function renderOrdersTable(orders) {
                 minute: '2-digit' 
             });
             
+            // Retornar HTML de la fila (data-order-id se usa para identificar la orden)
             return `
                 <tr class="order-row" data-order-id="${order.id}">
                     <td class="order-id">#${order.id}</td>
@@ -176,7 +208,7 @@ function renderOrdersTable(orders) {
         })
         .join('');
     
-    // Event listeners para las filas
+    // Añadir event listeners a cada fila para permitir seleccionar orden
     document.querySelectorAll('.order-row').forEach(row => {
         row.addEventListener('click', () => {
             const orderId = parseInt(row.dataset.orderId);
@@ -185,21 +217,37 @@ function renderOrdersTable(orders) {
     });
 }
 
-// ===== SELECCIONAR ORDEN =====
+/**
+ * Selecciona una orden y muestra sus detalles en el panel lateral
+ * - Busca la orden por ID en el array allOrders
+ * - Actualiza el estado visual (marca fila como activa)
+ * - Renderiza los detalles completos de la orden
+ */
 function selectOrder(orderId) {
+    // Buscar la orden en el array por su ID
     selectedOrder = allOrders.find(o => o.id === orderId);
-    if (!selectedOrder) return;
+    if (!selectedOrder) return; // Si no existe, salir de la función
     
-    // Actualizar clase activa
+    // Remover clase 'active' de todas las filas de la tabla
     document.querySelectorAll('.order-row').forEach(row => {
         row.classList.remove('active');
     });
+    
+    // Añadir clase 'active' solo a la fila seleccionada
     document.querySelector(`[data-order-id="${orderId}"]`).classList.add('active');
     
+    // Mostrar detalles de la orden en el panel lateral
     renderOrderDetails(selectedOrder);
 }
 
-// ===== RENDERIZAR DETALLES =====
+/**
+ * Renderiza los detalles completos de una orden en el panel lateral
+ * - Información del cliente (nombre, email)
+ * - Lista de items pedidos con cantidades y precios
+ * - Resumen de totales (subtotal, impuesto, total)
+ * - Selector para cambiar estado de la orden
+ * - Botón para guardar cambios de estado
+ */
 function renderOrderDetails(order) {
     const user = users.find(u => u.id === order.userId);
     const userName = user ? user.name : 'Unknown User';
@@ -286,53 +334,79 @@ function renderOrderDetails(order) {
     });
 }
 
-// ===== ACTUALIZAR ESTADO =====
+/**
+ * Actualiza el estado de una orden en el servidor y en la interfaz
+ * Pasos:
+ * 1. Envía el cambio de estado a la API
+ * 2. Actualiza el array local allOrders
+ * 3. Recalcula estadísticas
+ * 4. Vuelve a renderizar la tabla con los mismos filtros
+ * 5. Si la orden seleccionada cambió, actualiza detalles
+ * 6. Muestra confirmación al usuario
+ */
 async function updateOrderStatus(orderId, newStatus) {
     try {
+        // 1. Enviar cambio a la API (actualizar en servidor)
         await updateOrder(orderId, { status: newStatus });
         
-        // Actualizar localmente
+        // 2. Actualizar el estado localmente en el array
         const order = allOrders.find(o => o.id === orderId);
         if (order) {
-            order.status = newStatus;
+            order.status = newStatus;  // Cambiar status en el objeto
         }
         
-        // Re-renderizar
+        // 3. Recalcular estadísticas (porque cambió una orden)
         updateStats();
+        
+        // 4. Re-renderizar tabla manteniendo el mismo filtro
         const currentFilter = document.getElementById('statusFilter').value;
         const filtered = currentFilter === 'all' 
             ? allOrders 
             : allOrders.filter(o => o.status === currentFilter);
         renderOrdersTable(filtered);
         
+        // 5. Si la orden actualmente seleccionada cambió, actualizar detalles
         if (selectedOrder && selectedOrder.id === orderId) {
             selectedOrder.status = newStatus;
             renderOrderDetails(selectedOrder);
         }
         
+        // 6. Mostrar éxito al usuario
         alert('Order status updated successfully!');
     } catch (error) {
+        // Mostrar error si falla la actualización
         alert('Error updating order status');
         console.error(error);
     }
 }
 
-// ===== FILTROS =====
+/**
+ * Configura el event listener para el filtro de estado
+ * - Cuando cambia el selector de estado, filtra las órdenes
+ * - Si es 'all', muestra todas las órdenes
+ * - Si es un estado específico, muestra solo órdenes con ese estado
+ * - Re-renderiza la tabla con el nuevo filtro
+ */
 function setupFilters() {
     const statusFilter = document.getElementById('statusFilter');
     
     statusFilter.addEventListener('change', (e) => {
-        const status = e.target.value;
+        const status = e.target.value;  // Obtener estado seleccionado
         
+        // Filtrar órdenes según el estado seleccionado
         const filtered = status === 'all' 
-            ? allOrders 
-            : allOrders.filter(o => o.status === status);
+            ? allOrders                                    // Mostrar todas
+            : allOrders.filter(o => o.status === status); // Mostrar solo las de ese estado
         
+        // Volver a dibujar la tabla con las órdenes filtradas
         renderOrdersTable(filtered);
     });
 }
 
-// ===== HELPERS =====
+/**
+ * Función auxiliar: Capitaliza la primera letra de un texto
+ * Ejemplo: 'pending' -> 'Pending', 'delivered' -> 'Delivered'
+ */
 function capitalizeFirst(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }

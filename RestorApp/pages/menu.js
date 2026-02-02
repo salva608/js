@@ -139,28 +139,42 @@ export function menu() {
   `;
 }
 
-// ===== LÓGICA DEL MENÚ =====
+/**
+ * Función principal que inicializa la página de menú
+ * - Carga todos los productos desde la API
+ * - Renderiza los productos inicialmente
+ * - Configura los event listeners para filtros, búsqueda y carrito
+ */
 export async function menuLogic() {
-  // Cargar productos
+  // CARGA DE DATOS: Obtener todos los productos de la API
   allProducts = await fetchMenu();
+  // Inicialmente, mostrar todos los productos (sin filtro)
   filteredProducts = [...allProducts];
   renderProducts(filteredProducts);
 
-  // Event listeners
-  setupFilters();
-  setupSearch();
-  setupCart();
+  // CONFIGURACIÓN DE INTERACTIVIDAD
+  setupFilters();   // Activar botones de categoría
+  setupSearch();    // Activar barra de búsqueda
+  setupCart();      // Activar carrito y confirmación
 }
 
-// ===== RENDERIZAR PRODUCTOS =====
+/**
+ * Renderiza la grilla de productos en el DOM
+ * - Recibe un array de productos a mostrar (puede estar filtrado)
+ * - Convierte cada producto a una card visual
+ * - Añade event listeners a botones de "Add to order"
+ * - Si no hay productos, muestra mensaje de "No products found"
+ */
 function renderProducts(products) {
   const grid = document.getElementById("productsGrid");
 
+  // VALIDACIÓN: Si no hay productos (resultado de filtro vacío)
   if (products.length === 0) {
     grid.innerHTML = `<p class="text-muted">No products found</p>`;
     return;
   }
 
+  // RENDERIZADO: Convertir array de productos a HTML de cards
   grid.innerHTML = products
     .map(
       (product) => `
@@ -187,40 +201,57 @@ function renderProducts(products) {
     )
     .join("");
 
-  // Agregar event listeners a los botones
+  // EVENT LISTENERS: Añadir clic a cada botón "Add to order"
   document.querySelectorAll(".add-to-order-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const productId = parseInt(btn.dataset.id);
-      addToCart(productId);
+      addToCart(productId);  // Añadir producto al carrito
     });
   });
 }
 
-// ===== FILTROS =====
+/**
+ * Configura los botones de filtro por categoría
+ * - Cuando se hace clic en un botón, actualiza el estado visual (active)
+ * - Filtra los productos según la categoría seleccionada
+ * - Si es "All", muestra todos los productos
+ * - Re-renderiza la grilla con los productos filtrados
+ */
 function setupFilters() {
   const filterButtons = document.querySelectorAll(".filter-btn");
 
   filterButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      // Remover active de todos
+      // ESTADO VISUAL: Remover clase 'active' de todos los botones
       filterButtons.forEach((b) => b.classList.remove("active"));
-      // Agregar active al clickeado
+      // ESTADO VISUAL: Añadir clase 'active' solo al botón clickeado
       btn.classList.add("active");
 
+      // LÓGICA DE FILTRO
       const category = btn.dataset.category;
 
       if (category === "All") {
+        // Mostrar todos los productos
         filteredProducts = [...allProducts];
       } else {
-        filteredProducts = allProducts.filter((p) => p.category === category);
-      }
+ **
+ * Configura la barra de búsqueda para filtrar por nombre de producto
+ * - Cada vez que el usuario escribe en la barra de búsqueda
+ * - Filtra productos cuyo nombre contenga el texto (case-insensitive)
+ * - Re-renderiza la grilla con los resultados
+ */
+function setupSearch() {
+  const searchInput = document.getElementById("searchInput");
 
-      renderProducts(filteredProducts);
-    });
-  });
-}
+  searchInput.addEventListener("input", (e) => {
+    const query = e.target.value.toLowerCase();  // Obtener texto de búsqueda en minúsculas
 
-// ===== BÚSQUEDA =====
+    // FILTRO: Mostrar solo productos cuyo nombre incluya el texto de búsqueda
+    filteredProducts = allProducts.filter((p) =>
+      p.name.toLowerCase().includes(query)
+    );
+
+    // Re-dibujar grilla con resultados de búsqueda// ===== BÚSQUEDA =====
 function setupSearch() {
   const searchInput = document.getElementById("searchInput");
 
@@ -228,50 +259,77 @@ function setupSearch() {
     const query = e.target.value.toLowerCase();
 
     filteredProducts = allProducts.filter((p) =>
-      p.name.toLowerCase().includes(query)
-    );
-
-    renderProducts(filteredProducts);
-  });
-}
-
-// ===== CARRITO =====
+ **
+ * Configura los eventos del carrito (limpiar y confirmar orden)
+ * Botón "Clear all": Vacía el carrito
+ * Botón "Confirm Order": Envía la orden al servidor, guarda en BD y redirige
+ */
 function setupCart() {
   const clearAllBtn = document.getElementById("clearAllBtn");
   const confirmBtn = document.getElementById("confirmBtn");
 
+  // EVENTO 1: Botón "Clear all" - Vaciar carrito
   clearAllBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    cart = [];
-    renderCart();
+    cart = [];              // Vaciar array
+    renderCart();           // Actualizar interfaz
   });
 
+  // EVENTO 2: Botón "Confirm Order" - Crear orden
   confirmBtn.addEventListener("click", async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0) return;  // No permitir orden vacía
 
-    const user = getUser();
-    const subtotal = calculateSubtotal();
-    const tax = subtotal * 0.08;
-    const total = subtotal + tax;
+    // OBTENER DATOS NECESARIOS
+    const user = getUser();                  // Usuario actual de la sesión
+    const subtotal = calculateSubtotal();    // Suma de todos los items
+    const tax = subtotal * 0.08;             // Impuesto 8%
+    const total = subtotal + tax;            // Total final
 
+    // CONSTRUIR OBJETO DE ORDEN
     const order = {
-      userId: user.id,
-      items: cart,
+      userId: user.id,                       // ID del usuario que ordena
+      items: cart,                           // Array de items del carrito
       subtotal: parseFloat(subtotal.toFixed(2)),
       tax: parseFloat(tax.toFixed(2)),
       total: parseFloat(total.toFixed(2)),
-      status: "pending",
-      createdAt: new Date().toISOString(),
+      status: "pending",                     // Estado inicial: pendiente
+      createdAt: new Date().toISOString(),   // Fecha y hora de creación
     };
 
     try {
+      // ENVIAR ORDEN AL SERVIDOR
       await createOrder(order);
-      alert("Order confirmed successfully!");
-      cart = [];
-      renderCart();
-      location.hash = "#/menu";
-    } catch (error) {
-      alert("Error creating order");
+      
+      // FEEDBACK AL USUARIO
+/**
+ * Añade un producto al carrito o aumenta su cantidad si ya existe
+ * - Si el producto ya está en el carrito: incrementar cantidad
+ * - Si es nuevo: crear item en el carrito
+ * - Actualizar la interfaz del carrito
+ */
+function addToCart(productId) {
+  // Encontrar el producto en el array de todos los productos
+  const product = allProducts.find((p) => p.id === productId);
+  if (!product) return;  // Si no existe, salir
+
+  // Verificar si el producto ya está en el carrito
+  const existingItem = cart.find((item) => item.productId === productId);
+
+  if (existingItem) {
+    // Si ya existe: solo incrementar cantidad
+    existingItem.quantity += 1;
+  } else {
+    // Si es nuevo: crear item completo
+    cart.push({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+    });
+  }
+
+  // Actualizar la interfaz del carrito      alert("Error creating order");
       console.error(error);
     }
   });
@@ -298,38 +356,64 @@ function addToCart(productId) {
   renderCart();
 }
 
+/**
+ * Elimina un producto completamente del carrito
+ */
 function removeFromCart(productId) {
+  // Filtrar: mantener solo items que NO sean de este producto
   cart = cart.filter((item) => item.productId !== productId);
+  // Actualizar interfaz
   renderCart();
 }
 
+/**
+ * Modifica la cantidad de un producto en el carrito
+ * - change: número positivo o negativo para sumar/restar
+ * - Si cantidad llega a 0 o menos, eliminar producto
+ * - Si es válido, actualizar cantidad
+ */
 function updateQuantity(productId, change) {
+  // Encontrar item en el carrito
   const item = cart.find((item) => item.productId === productId);
-  if (!item) return;
+  if (!item) return;  // Si no existe, salir
 
+  // Modificar cantidad
   item.quantity += change;
 
+  // Si cantidad es 0 o menos, eliminar del carrito
   if (item.quantity <= 0) {
     removeFromCart(productId);
   } else {
+    // Si es válido, actualizar interfaz
     renderCart();
   }
 }
 
+/**
+ * Renderiza todos los items del carrito en la interfaz
+ * - Actualiza el badge con cantidad total de items
+ * - Muestra mensaje si el carrito está vacío
+ * - Renderiza cada item con controls (+ - Remove)
+ * - Añade event listeners para botones
+ * - Actualiza el resumen de precios
+ */
 function renderCart() {
   const orderItems = document.getElementById("orderItems");
   const cartBadge = document.getElementById("cartBadge");
   const orderSummary = document.getElementById("orderSummary");
 
+  // ACTUALIZAR BADGE: Contar total de items (por cantidad)
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   cartBadge.textContent = totalItems;
 
+  // VALIDACIÓN: Si carrito está vacío
   if (cart.length === 0) {
     orderItems.innerHTML = `<p class="text-muted text-center">Your cart is empty</p>`;
     orderSummary.style.display = "none";
     return;
   }
 
+  // RENDERIZADO: Convertir cada item del carrito a HTML
   orderItems.innerHTML = cart
     .map(
       (item) => `
@@ -350,16 +434,17 @@ function renderCart() {
     )
     .join("");
 
-  // Event listeners para botones de cantidad
+  // EVENT LISTENERS: Botones de aumentar/disminuir cantidad
   document.querySelectorAll(".quantity-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const productId = parseInt(btn.dataset.id);
       const action = btn.dataset.action;
+      // Si es "increase": +1, si es "decrease": -1
       updateQuantity(productId, action === "increase" ? 1 : -1);
     });
   });
 
-  // Event listeners para botones de remover
+  // EVENT LISTENERS: Botones de remover item
   document.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -368,20 +453,32 @@ function renderCart() {
     });
   });
 
-  // Actualizar resumen
+  // ACTUALIZAR RESUMEN: Calcular y mostrar totales
   updateSummary();
   orderSummary.style.display = "block";
 }
 
+/**
+ * Calcula el subtotal (suma de todos items: precio × cantidad)
+ * Devuelve la suma total sin impuestos
+ */
 function calculateSubtotal() {
   return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
+/**
+ * Actualiza los valores de subtotal, impuesto y total en el DOM
+ * Cálculos:
+ * - Subtotal: suma de precios
+ * - Tax: subtotal × 0.08 (8%)
+ * - Total: subtotal + tax
+ */
 function updateSummary() {
   const subtotal = calculateSubtotal();
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const tax = subtotal * 0.08;      // Aplicar 8% de impuesto
+  const total = subtotal + tax;     // Sumar subtotal + impuesto
 
+  // Inyectar valores en el DOM
   document.getElementById("subtotal").textContent = `$${subtotal.toFixed(2)}`;
   document.getElementById("tax").textContent = `$${tax.toFixed(2)}`;
   document.getElementById("total").textContent = `$${total.toFixed(2)}`;

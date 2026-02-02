@@ -1,7 +1,13 @@
 import { getUser, clearUser } from "../services/storage.js";
 import { fetchOrders } from "../services/api.js";
 
-// ─── Mapeo de iconos SVG según estado ───────────────────────────────────────
+/**
+ * Mapeo de iconos SVG para cada estado de orden
+ * - pending: Ícono de pregunta/información
+ * - preparing: Ícono de reloj (en proceso)
+ * - ready: Ícono de checkmark (completado)
+ * - delivered: Ícono de checkmark en círculo (entregado)
+ */
 const statusIcons = {
     pending: `<svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -19,15 +25,27 @@ const statusIcons = {
                 </svg>`
 };
 
-// ─── Formatear fecha a lectura amigable ─────────────────────────────────────
+/**
+ * Convierte una fecha ISO a formato legible
+ * Ejemplo: "2024-01-15T10:30:00Z" -> "Jan 15, 2024"
+ */
 function formatDate(dateStr) {
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateStr).toLocaleDateString("en-US", options);
 }
 
-// ─── Generar HTML de un solo pedido ─────────────────────────────────────────
+/**
+ * Crea el HTML de una card de orden individual
+ * - Muestra número de orden (ej: #ORD-0001)
+ * - Fecha y cantidad de items
+ * - Ícono decorativo según estado
+ * - Precio total
+ * - Badge de estado
+ */
 function renderOrderCard(order) {
+    // Calcular total de items en la orden (sumando cantidades)
     const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    // Obtener ícono correspondiente al estado (o 'pending' si no existe)
     const icon = statusIcons[order.status] || statusIcons.pending;
 
     return `
@@ -36,9 +54,16 @@ function renderOrderCard(order) {
                 ${icon}
             </div>
             <div class="order-info">
-                <div class="order-number">#ORD-${String(order.id).padStart(4, "0")}</div>
-                <div class="order-meta">${formatDate(order.createdAt)} • ${totalItems} ${totalItems === 1 ? "Item" : "Items"}</div>
-            </div>
+ **
+ * Genera el HTML completo de la página de perfil
+ * - Navbarra con logout
+ * - Sección de órdenes recientes
+ * - Panel de detalles de cuenta (avatar, stats, menú)
+ */
+function getTemplate(user) {
+    // Convertir rol a etiqueta legible
+    const roleLabel = user.role === "admin" ? "Admin" : "Customer";
+    // Generar ID de avatar basado en el ID del usuario (0-9)
             <div class="order-price">$${order.total.toFixed(2)}</div>
             <span class="order-status status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
         </div>
@@ -160,61 +185,74 @@ function getTemplate(user) {
                             </div>
                             <svg class="menu-item-arrow" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="footer-text">
-                        RestorApp Academic Simulation V1.0<br>
-                        Performance monitoring active.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    `;
-}
-
-// ─── Función principal exportada ────────────────────────────────────────────
+ **
+ * Función principal que carga y renderiza la página de perfil
+ * Pasos:
+ * 1. Verificar que el usuario está logueado (si no, redirigir a login)
+ * 2. Renderizar estructura HTML del perfil
+ * 3. Configurar evento de logout
+ * 4. Obtener y procesar órdenes del usuario desde API
+ * 5. Actualizar estadísticas y mostrar historial de órdenes
+ */
 export async function profile() {
-    // Obtener usuario de sesión; si no existe, redirigir al login
+    // VALIDACIÓN: Obtener usuario de la sesión
     const user = getUser();
     if (!user) {
+        // Si no hay usuario logueado, redirigir a login
         location.hash = "#/login";
         return "";
     }
 
-    // Renderizar esqueleto inmediatamente con datos del usuario
+    // RENDERIZADO INICIAL: Inyectar HTML del perfil en el DOM
     document.getElementById("app").innerHTML = getTemplate(user);
 
-    // ─── Evento logout ──────────────────────────────────────────────────────
+    // EVENTO: Configurar botón de logout
     document.getElementById("logout-btn").addEventListener("click", () => {
-        clearUser();
-        location.hash = "#/login";
+        clearUser();                          // Limpiar sesión
+        location.hash = "#/login";           // Redirigir a login
     });
 
-    // ─── Traer pedidos desde la API y procesar ─────────────────────────────
+    // OBTENER Y PROCESAR ÓRDENES DEL USUARIO
     try {
+        // Traer todas las órdenes de la API
         const allOrders = await fetchOrders();
 
-        // filter: solo los pedidos del usuario logueado
+        // FILTER: Filtrar solo las órdenes del usuario actual
         const userOrders = allOrders.filter(order => order.userId === user.id);
 
-        // some: verificar si tiene al menos un pedido activo (no entregado)
+        // SOME: Verificar si tiene al menos una orden activa (no entregada)
         const hasActiveOrders = userOrders.some(
             order => order.status === "pending" || order.status === "preparing" || order.status === "ready"
         );
 
-        // every: verificar si todos sus pedidos tienen items válidos
+        // EVERY: Verificar si todas sus órdenes tienen items válidos
         const allOrdersValid = userOrders.every(
             order => order.items && order.items.length > 0
         );
 
-        // reduce: calcular total gastado solo en pedidos válidos
+        // REDUCE: Calcular dinero total gastado (solo órdenes válidas)
         const totalSpent = allOrdersValid
             ? userOrders.reduce((sum, order) => sum + order.total, 0)
             : 0;
+
+        // ACTUALIZAR ESTADÍSTICAS EN EL DOM
+        document.getElementById("stat-total-orders").textContent = userOrders.length;
+        document.getElementById("stat-total-spent").textContent = `$${totalSpent.toFixed(2)}`;
+
+        // RENDERIZAR CARDS DE ÓRDENES CON MAP
+        const ordersHTML = userOrders.length > 0
+            // Si hay órdenes: convertir cada una a card HTML
+            ? userOrders.map(order => renderOrderCard(order)).join("")
+            // Si no hay órdenes: mostrar mensaje
+            : `<p style="color:#888; padding:12px 0; text-align:center;">No orders yet. Head to the Menu to place your first order!</p>`;
+
+        document.getElementById("orders-list").innerHTML = ordersHTML;
+
+        // LOG DE DEBUG: Información para desarrolladores
+        console.log("[Profile] User orders:", userOrders.length, "| Active:", hasActiveOrders, "| All valid:", allOrdersValid, "| Total spent: $" + totalSpent.toFixed(2));
+
+    } catch (error) {
+        // MANEJO DE ERROR: Si falla al obtener órdenes
 
         // ─── Actualizar estadísticas en el DOM ──────────────────────────────
         document.getElementById("stat-total-orders").textContent = userOrders.length;

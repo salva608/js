@@ -64,41 +64,58 @@ export function login() {
 }
 
 
+/**
+ * Maneja la lógica de autenticación del formulario de login
+ * Pasos:
+ * 1. Obtiene referencia al formulario y elemento de error
+ * 2. Valida que email y contraseña no estén vacíos
+ * 3. Busca el usuario en la base de datos
+ * 4. Verifica que email, contraseña y rol coincidan
+ * 5. Si es válido, guarda el usuario en storage y redirige
+ * 6. Si no es válido, muestra mensaje de error
+ */
 export async function loginLogic() {
   const form = document.getElementById("loginForm");
   const error = document.getElementById("error");
 
   form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevenir envío por defecto del formulario
 
+    // Obtener valores del formulario y remover espacios en blanco
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
     const role = document.getElementById("role").value;
 
+    // VALIDACIÓN 1: Verificar que el email no esté vacío
     if (!email) {
       error.textContent = "Email is required";
       return;
     }
 
+    // VALIDACIÓN 2: Verificar que la contraseña no esté vacía
     if (!password) {
       error.textContent = "Password is required";
       return;
     }
 
+    // AUTENTICACIÓN: Obtener todos los usuarios de la API
     const users = await fetchUsers();
 
+    // BÚSQUEDA: Encontrar usuario que coincida con email, password Y rol
     const user = users.find(
       u => u.email === email && u.password === password && u.role === role
     );
 
+    // VALIDACIÓN 3: Verificar que se encontró el usuario
     if (!user) {
       error.textContent = "Invalid credentials";
       return;
     }
 
+    // GUARDAR SESIÓN: Guardar usuario en localStorage y redirigir a menu
     saveUser(user);
 
-    // Redirección por rol
+    // Redirigir a la página de menú
     location.hash = "#/menu";
   });
 }
