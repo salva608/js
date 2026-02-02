@@ -1,0 +1,111 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Admin User",
+      "email": "admin@test.com",
+      "password": "admin123",
+      "role": "admin",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "name": "Juan Pérez",
+      "email": "juan@test.com",
+      "password": "juan123",
+      "role": "user",
+      "createdAt": "2024-01-02T00:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "name": "María García",
+      "email": "maria@test.com",
+      "password": "maria123",
+      "role": "user",
+      "createdAt": "2024-01-03T00:00:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "1",
+      "title": "Conferencia de Tecnología 2024",
+      "description": "Únete a nosotros para una conferencia exclusiva sobre las últimas tendencias en tecnología. Contaremos con expertos de la industria que compartirán sus conocimientos sobre inteligencia artificial, machine learning, desarrollo web y más. Además, habrá networking y oportunidades de empleo para los asistentes.",
+      "date": "2024-06-15T09:00:00.000Z",
+      "location": "Centro de Convenciones, Ciudad de México",
+      "maxCapacity": 500,
+      "organizerId": 1,
+      "organizerName": "Admin User",
+      "createdAt": "2024-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "title": "Workshop de JavaScript",
+      "description": "Un taller práctico donde aprenderás los fundamentos de JavaScript moderno. Cubriremos conceptos como closures, promises, async/await, y cómo aplicarlos en proyectos reales. Trae tu laptop y prepárate para codificar.",
+      "date": "2024-05-20T14:00:00.000Z",
+      "location": "Coworking Space, Madrid",
+      "maxCapacity": 30,
+      "organizerId": 2,
+      "organizerName": "Juan Pérez",
+      "createdAt": "2024-01-12T00:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "title": "Meetup de Desarrolladores",
+      "description": "Reunión mensual de la comunidad de desarrolladores. Ven a conocer otros profesionales, compartir experiencias y aprender algo nuevo. Habrá presentaciones cortas y mucha conversación.",
+      "date": "2024-04-25T18:30:00.000Z",
+      "location": "Café Tech, Barcelona",
+      "maxCapacity": 50,
+      "organizerId": 3,
+      "organizerName": "María García",
+      "createdAt": "2024-01-14T00:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "title": "Hackathon de Innovación",
+      "description": "24 horas de código, creatividad y diversión. Forma equipos, desarrolla soluciones innovadoras y compite por premios en efectivo. Se proporcionarán alimentos y bebidas durante todo el evento.",
+      "date": "2024-07-01T08:00:00.000Z",
+      "location": "Universidad Tecnológica, Buenos Aires",
+      "maxCapacity": 100,
+      "organizerId": 1,
+      "organizerName": "Admin User",
+      "createdAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": "9312",
+      "title": "salva",
+      "description": "ho la ls sk js sj sj ns ns",
+      "date": "2026-02-20T05:05:00.000Z",
+      "location": "aaaaaaaaaaaaaaaaa",
+      "maxCapacity": 6,
+      "organizerId": "1",
+      "organizerName": "Admin User",
+      "createdAt": "2026-02-02T05:06:03.912Z"
+    }
+  ],
+  "registrations": [
+    {
+      "id": "1",
+      "eventId": 1,
+      "userId": 2,
+      "userName": "Juan Pérez",
+      "eventTitle": "Conferencia de Tecnología 2024",
+      "registeredAt": "2024-01-15T10:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "eventId": 1,
+      "userId": 3,
+      "userName": "María García",
+      "eventTitle": "Conferencia de Tecnología 2024",
+      "registeredAt": "2024-01-16T14:30:00.000Z"
+    },
+    {
+      "id": "3",
+      "eventId": 2,
+      "userId": 1,
+      "userName": "Admin User",
+      "eventTitle": "Workshop de JavaScript",
+      "registeredAt": "2024-01-17T09:00:00.000Z"
+    }
+  ]
+}

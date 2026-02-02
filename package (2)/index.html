@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Eventos</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation Header -->
+        <header id="header" class="header hidden">
+            <nav class="nav-container">
+                <div class="logo">
+                    <h1>EventManager</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="#" data-view="home" class="nav-link">Inicio</a>
+                    <a href="#" data-view="events" class="nav-link">Eventos</a>
+                    <a href="#" data-view="createEvent" class="nav-link">Crear Evento</a>
+                    <span id="userInfo"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main" class="main-container">
+            <!-- Views will be loaded here dynamically -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Sistema de Gestión de Eventos. Desarrollado para propósitos educativos.</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/app.js" type="module"></script>
+</body>
+</html>
