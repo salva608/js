@@ -1,0 +1,131 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "admin@restorapp.com",
+      "password": "123456",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "name": "Normal User",
+      "email": "user@restorapp.com",
+      "password": "123456",
+      "role": "user"
+    }
+  ],
+  "menu": [
+    {
+      "id": 1,
+      "name": "Classic Beef Burger",
+      "price": 8.99,
+      "category": "Burgers",
+      "description": "Premium beef patty with cheddar cheese, lettuce, tomato, and our special sauce",
+      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"
+    },
+    {
+      "id": 2,
+      "name": "Double Bacon Melt",
+      "price": 12.5,
+      "category": "Burgers",
+      "description": "Two patties, crispy bacon, melted swiss cheese, and BBQ sauce",
+      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500"
+    },
+    {
+      "id": 3,
+      "name": "Golden Fries",
+      "price": 3.99,
+      "category": "Sides",
+      "description": "Freshly cut potatoes fried to perfection with sea salt",
+      "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500"
+    },
+    {
+      "id": 4,
+      "name": "Cola Zero",
+      "price": 2.5,
+      "category": "Drinks",
+      "description": "Chilled zero sugar cola with ice and a slice of lemon",
+      "image": "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=500"
+    },
+    {
+      "id": 5,
+      "name": "Donut Box",
+      "price": 6,
+      "category": "Desserts",
+      "description": "Assorted glazed and frosted donuts",
+      "image": "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+      "id": 6,
+      "name": "Pepperoni Slice",
+      "price": 4.5,
+      "category": "Pizza",
+      "description": "Large NY style slice with double pepperoni",
+      "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500"
+    }
+  ],
+  "orders": [
+    {
+      "userId": 1,
+      "items": [
+        {
+          "productId": 2,
+          "name": "Double Bacon Melt",
+          "price": 12.5,
+          "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500",
+          "quantity": 1
+        },
+        {
+          "productId": 1,
+          "name": "Classic Beef Burger",
+          "price": 8.99,
+          "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500",
+          "quantity": 1
+        }
+      ],
+      "subtotal": 21.49,
+      "tax": 1.72,
+      "total": 23.21,
+      "status": "ready",
+      "createdAt": "2026-02-01T23:04:30.595Z",
+      "id": 1
+    },
+    {
+      "userId": 1,
+      "items": [
+        {
+          "productId": 4,
+          "name": "Cola Zero",
+          "price": 2.5,
+          "image": "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=500",
+          "quantity": 1
+        }
+      ],
+      "subtotal": 2.5,
+      "tax": 0.2,
+      "total": 2.7,
+      "status": "pending",
+      "createdAt": "2026-02-02T02:18:27.810Z",
+      "id": 2
+    },
+    {
+      "userId": 1,
+      "items": [
+        {
+          "productId": 2,
+          "name": "Double Bacon Melt",
+          "price": 12.5,
+          "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500",
+          "quantity": 1
+        }
+      ],
+      "subtotal": 12.5,
+      "tax": 1,
+      "total": 13.5,
+      "status": "pending",
+      "createdAt": "2026-02-02T03:24:31.717Z",
+      "id": 3
+    }
+  ]
+}
